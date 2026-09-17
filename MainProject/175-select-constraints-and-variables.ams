@@ -1,6 +1,6 @@
 ## ams_version=1.0
 
-Model Main_SelectConstraints {
+Model Main_Select_Constraints_and_Variables {
 	DeclarationSection Input_Declarations {
 		Set s_Products {
 			Index: i_product;
