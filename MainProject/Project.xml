@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<Project AimmsVersion="26.4.3.0 unicode x64" ProjectUUID="C62A1B37-2D10-4E6C-B78D-EE0856532C5E">
+	<ModelFileName>175-select-constraints-and-variables.ams</ModelFileName>
+	<AutoSaveAndBackup>
+		<DataBackup AtRegularInterval="true" EveryNMinutes="15" NumBackupsDatedToday="3" NumDaysBeforeToday="3" />
+	</AutoSaveAndBackup>
+</Project>

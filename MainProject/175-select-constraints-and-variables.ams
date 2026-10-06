@@ -1,0 +1,302 @@
+## ams_version=1.0
+
+Model Main_Select_Constraints_and_Variables {
+	Comment: {
+		"Tutorial model: a tiny production-and-delivery example.
+		Read it from inputs to variables to constraints to the solve step.
+		The model checks whether plant capacity can cover all required demand."
+	}
+	DeclarationSection Inputs {
+		Comment: {
+			"Tutorial input section.
+			Start here when learning the model: these identifiers define
+			what products exist, what markets exist, how much demand there is,
+			and the total plant capacity limits."
+		}
+		Set s_products {
+			Index: i_product;
+			InitialData: data { a, b };
+			Comment: {
+				"Set of products.
+				This is one main model dimension, indexed by i_product.
+				Any identifier indexed by i_product stores one value per product."
+			}
+		}
+		Set s_markets {
+			Index: i_market;
+			InitialData: data { m, n };
+			Comment: {
+				"Set of markets.
+				This is the second main model dimension, indexed by i_market.
+				Any identifier indexed by i_market stores one value per market."
+			}
+		}
+		Parameter p_demand {
+			IndexDomain: (i_product,i_market);
+			InitialData: data { ( a, m ) : 1,  ( a, n ) : 1,  ( b, m ) : 2,  ( b, n ) : 2 };
+			Comment: {
+				"Input parameter: demand per product-market pair.
+				Because it is indexed by both i_product and i_market,
+				it stores one required quantity for each combination.
+				The demand constraint forces deliveries to match these values exactly."
+			}
+		}
+		Parameter p_plantMinCapacity {
+			InitialData: 8;
+			Comment: {
+				"Input parameter: optional minimum total production.
+				This would be used when the plant must produce at least some amount.
+				In the current tutorial model it only feeds c_plantMinCapacity,
+				which is parked in Attic and therefore not active in the solve."
+			}
+		}
+		Parameter p_plantMaxCapacity {
+			InitialData: 20;
+			Comment: {
+				"Input parameter: maximum total production capacity.
+				Think of this as the plant-wide upper limit.
+				The model sums production over all products and keeps it below this value."
+			}
+		}
+	}
+	DeclarationSection Mathematical_Program {
+		Comment: {
+			"Tutorial optimization section.
+			This is the heart of the model: decision variables, constraints,
+			helper sets that collect rows and columns, and the mathematical program.
+			Read the variables first, then the constraints, then mp_produceDeliver."
+		}
+		Variable v_objective {
+			Range: free;
+			Definition: sum( (i_product, i_market), v_deliver(i_product, i_market) );
+			Comment: {
+				"Objective variable: total delivered quantity.
+				It is defined as the sum of all deliveries across products and markets.
+				In this tutorial model demand must be met exactly,
+				so this objective is fixed once the constraints are enforced.
+				That means the model behaves mainly like a feasibility check."
+			}
+		}
+		Variable v_produce {
+			IndexDomain: i_product;
+			Range: nonnegative;
+			Comment: {
+				"Decision variable: how much of each product to produce.
+				The solver chooses one value for each product.
+				These values must satisfy product balance and plant capacity."
+			}
+		}
+		Variable v_deliver {
+			IndexDomain: (i_product,i_market);
+			Range: nonnegative;
+			Comment: {
+				"Decision variable: how much of each product to deliver to each market.
+				The solver chooses one value for every product-market pair.
+				In this model those choices are fully pinned down by demand,
+				because c_deliverDemand sets delivery equal to demand."
+			}
+		}
+		Constraint c_deliverDemand {
+			IndexDomain: (i_product,i_market);
+			Definition: v_deliver(i_product, i_market) = p_demand(i_product, i_market);
+			Comment: {
+				"Constraint: meet demand exactly.
+				For every product and market, delivery must equal the demand parameter.
+				This is stricter than a >= service rule:
+				there is no shortage, no surplus, and no backlogging."
+			}
+		}
+		Constraint c_plantMaxCapacity {
+			Definition: sum( i_product, v_produce(i_product) ) <= p_plantMaxCapacity;
+			Comment: {
+				"Constraint: do not exceed total plant capacity.
+				It adds production over all products and compares that total
+				with p_plantMaxCapacity.
+				If demand implies more production than this limit allows,
+				the model becomes infeasible."
+			}
+		}
+		Constraint c_productBalance {
+			IndexDomain: i_product;
+			Definition: v_produce(i_product) = sum( i_market, v_deliver(i_product, i_market) );
+			Comment: {
+				"Constraint: product balance.
+				For each product, what is produced must equal what is delivered.
+				This is a standard conservation equation.
+				Because there is no inventory variable here,
+				production flows directly to deliveries in the same model period."
+			}
+		}
+		Set s_mpVars {
+			SubsetOf: AllVariables;
+			Definition: AllVariables * Mathematical_Program;
+			Comment: {
+				"Generated set of variables in the mathematical program.
+				Instead of listing variables one by one in mp_produceDeliver,
+				this set collects all variables declared in Mathematical_Program.
+				This is a convenient AIMMS pattern for small tutorial models."
+			}
+		}
+		Set s_mpCons {
+			SubsetOf: AllConstraints;
+			Definition: AllConstraints * Mathematical_Program;
+			Comment: {
+				"Generated set of constraints in the mathematical program.
+				It collects all constraints declared in Mathematical_Program.
+				This also explains why c_plantMinCapacity is inactive:
+				it lives in Attic, so it is not part of this generated set."
+			}
+		}
+		MathematicalProgram mp_produceDeliver {
+			Objective: v_objective;
+			Direction: maximize;
+			Constraints: s_mpCons;
+			Variables: s_mpVars;
+			Type: Automatic;
+			Comment: {
+				"Mathematical program declaration.
+				This is the object AIMMS sends to the solver.
+				It says which variable is the objective, whether to maximize or minimize,
+				and which generated sets provide the model variables and constraints."
+			}
+		}
+	}
+	DeclarationSection Attic {
+		Comment: {
+			"Tutorial parking area for inactive model parts.
+			Identifiers placed here are useful for learning or later extension,
+			but they are not active in the current solve unless referenced explicitly."
+		}
+		Constraint c_plantMinCapacity {
+			Definition: sum( i_product, v_Produce(i_product) ) >= p_PlantMinCapacity;
+			Comment: {
+				"Constraint: optional minimum total production.
+				If this row were active, the plant would need to produce
+				at least p_plantMinCapacity in total.
+				It is useful as a teaching example of how to add another bound,
+				but it is currently parked in Attic and excluded from s_mpCons."
+			}
+		}
+	}
+	DeclarationSection Reporting {
+		Comment: {
+			"Tutorial reporting section.
+			After a solve, these identifiers translate the solver status
+			into a simple statement that says whether the solution is acceptable."
+		}
+		Set s_def_acceptableSolutionStates {
+			SubsetOf: AllSolutionStates;
+			InitialData: data { Optimal, LocallyOptimal, IntermediateNonOptimal, IntegerSolution };
+			Comment: {
+				"Set of solution states that this tutorial treats as acceptable.
+				After the solve, the program status is checked against this set.
+				This is a simple way to centralize reporting rules."
+			}
+		}
+		StringParameter sp_def_solutionAcceptable {
+			Definition: {
+				if ep_def_solutionState in s_def_acceptableSolutionStates then
+					"Solution is acceptable"
+				else
+					"Solution is not acceptable; at least one of our constraints is violated"
+				endif
+			}
+			Comment: {
+				"Derived reporting message.
+				It turns the technical solver status into a short human-readable sentence.
+				This is useful when teaching how to separate optimization logic
+				from reporting logic."
+			}
+		}
+		ElementParameter ep_def_solutionState {
+			Range: AllSolutionStates;
+			Definition: mp_produceDeliver.ProgramStatus;
+			Comment: {
+				"Element parameter storing the latest program status.
+				Its value comes from mp_produceDeliver.ProgramStatus.
+				The reporting string then uses this status to decide what message to show."
+			}
+		}
+	}
+	Procedure MainInitialization {
+		Body: {
+			! Runs before full startup has finished.
+			! Use this place for very early initialization if needed.
+			! This tutorial example has nothing to initialize yet.
+		}
+		Comment: {
+			"Tutorial startup hook before full library initialization.
+			Use this procedure for very early setup work.
+			This example leaves it empty because the model needs no special startup logic."
+		}
+	}
+	Procedure PostMainInitialization {
+		Body: {
+			! Runs after library startup is complete.
+			! Use this place for initialization that depends on libraries.
+			! This tutorial example keeps the procedure empty on purpose.
+		}
+		Comment: {
+			"Tutorial startup hook after library initialization.
+			Use this when startup logic depends on libraries or managed data.
+			This example keeps it empty to stay focused on the optimization model itself."
+		}
+	}
+	Procedure MainExecution {
+		Body: {
+			! Solve the mathematical program for this example.
+			! The program collects the objective, variables,
+			! and active constraints into one optimization model.
+			Solve mp_produceDeliver ;
+			! After the solve, the variable levels contain
+			! the production and delivery plan found by AIMMS.
+		}
+		Comment: {
+			"Main tutorial solve procedure.
+			This is the procedure to run when you want to solve the model.
+			Its body contains a single Solve statement for mp_produceDeliver,
+			which keeps the example easy to trace from procedure to model to results."
+		}
+	}
+	Procedure PreMainTermination {
+		Body: {
+			! Return 1 to allow AIMMS shutdown to continue.
+			! Add cleanup here later if the project needs it.
+			return 1;
+		}
+		Comment: {
+			"Tutorial shutdown hook while libraries are still available.
+			Returning 1 allows AIMMS to continue shutting down.
+			This example keeps the default behavior and does no cleanup here."
+		}
+	}
+	Procedure MainTermination {
+		Body: {
+			! Final shutdown hook for the project.
+			! Return 1 to confirm termination may finish.
+			return 1;
+		}
+		Comment: {
+			"Final tutorial shutdown hook.
+			Returning 1 allows termination to continue.
+			This example leaves the procedure simple so attention stays on the model."
+		}
+	}
+	Section Quantities_and_Units {
+		Comment: {
+			"This section contains all the units and quantities that are added automatically by AIMMS.
+			It is recommended to declare all your quantities here."
+		}
+		Quantity SI_Time_Duration {
+			BaseUnit: s;
+			Conversions: minute->s : #-># * 60;
+			Comment: {
+				"Expresses the value for the duration of periods.
+				
+				The unit s has been added automatically because it is a required unit for AimmsWebUI.
+				
+				The unit minute has been added automatically because it is a required unit for AimmsWebUI."
+			}
+		}
+	}
+}

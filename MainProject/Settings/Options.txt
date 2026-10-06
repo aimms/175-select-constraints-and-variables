@@ -1,0 +1,8 @@
+﻿* AIMMS
+* CBC 2.9
+* CPLEX 22.1
+* IPOPT 3.11
+* NETSOL
+* Environment
+Project_Title "175-select-constraints-and-variables"
+Default_UI 0
