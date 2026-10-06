@@ -1,6 +1,6 @@
 # AIMMS How-To: Hello to the World of `aimmspy`
 
-![AIMMS Version](https://img.shields.io/badge/AIMMS-25.9-white?style=for-the-badge&labelColor=009B00&color=00D400)
+![AIMMS Version](https://img.shields.io/badge/AIMMS-26.4-white?style=for-the-badge&labelColor=009B00&color=00D400)
 
 This repository contains the **minimal working example (MWE)** discussed in the following AIMMS How-To article:
 
