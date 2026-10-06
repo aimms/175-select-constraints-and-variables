@@ -1,5 +1,11 @@
 * The timestamps in this namechange file are stored in Coordinated universal time (UTC).
 "i_p" "i_product" "2019-08-20 06:21:46"
-"v_ProduceA" "v_Produce" "2019-08-20 06:22:00"
-"v_ProduceB" "v_Deliver" "2019-08-20 06:22:26"
+"v_ProduceA" "v_produce" "2019-08-20 06:22:00"
+"v_ProduceB" "v_deliver" "2019-08-20 06:22:26"
 "Main_SelectConstraints" "Main_Select_Constraints_and_Variables" "2026-09-17 19:29:20"
+"ep_solutionState" "ep_def_solutionState" "2026-10-06 19:40:28"
+"sp_aolutionAcceptable" "sp_solutionAcceptable" "2026-10-06 19:40:34"
+"sp_solutionAcceptable" "sp_def_solutionAcceptable" "2026-10-06 19:40:37"
+"s_acceptableSolutionStates" "s_def_acceptableSolutionStates" "2026-10-06 19:40:43"
+"v_obj" "v_objective" "2026-10-06 19:41:49"
+"v_obj_definition" "v_objective_definition" "2026-10-06 19:41:49"
